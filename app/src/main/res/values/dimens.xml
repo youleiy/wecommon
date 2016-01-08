@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="lockscreen_margin_top">60dp</dimen>
+    <dimen name="lockscreen_margin_bottom">34dp</dimen>
+    <dimen name="date_margin_top">18dp</dimen>
+    <dimen name="date_margin_bottom">30.33dp</dimen>
+    <dimen name="ad_height">262dp</dimen>
+    <dimen name="button_size">40dp</dimen>
+    <dimen name="key_size">80dp</dimen>
+</resources>
