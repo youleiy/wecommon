@@ -13,7 +13,6 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.provider.Settings;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -24,6 +23,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.webeye.common.FastBlur;
+import com.webeye.common.WeLog;
 import com.webeye.common.WeTimeUtils;
 
 /**
@@ -31,7 +31,7 @@ import com.webeye.common.WeTimeUtils;
  *
  * @author Thunder
  */
-public class LockScreenActivity extends Activity{
+public class LockScreenActivity extends Activity {
     private static final String TAG = "LockScreenActivity";
 
     public static boolean isStarted = false; //判断锁屏页面是否打开状态
@@ -58,16 +58,13 @@ public class LockScreenActivity extends Activity{
      * 屏蔽4.0+home键, 某些机型可以，不能适用所有版本和机型
      */
     // private static final int FLAG_HOMEKEY_DISPATCHED = 0x80000000;
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         // 屏蔽4.0+home键, 某些机型可以，不能适用所有版本和机型
         // this.getWindow().setFlags(FLAG_HOMEKEY_DISPATCHED, FLAG_HOMEKEY_DISPATCHED);// 屏蔽4.0+ home键
 
-        getWindow().addFlags(
-                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
-                        | WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
                         | WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_lockscreen);
 
@@ -120,7 +117,7 @@ public class LockScreenActivity extends Activity{
         if ((keyCode == KeyEvent.KEYCODE_HOME)) {
             // Key code constant: Home key. This key is handled by the framework
             // and is never delivered to applications.
-            Log.e(TAG, "On Home Key");
+            WeLog.e(TAG, "On Home Key");
             return true;
         }
         return super.onKeyDown(keyCode, event);
@@ -136,7 +133,7 @@ public class LockScreenActivity extends Activity{
 
     @Override
     public void onBackPressed() {
-        Log.e(TAG, "onBackPressed");
+        WeLog.e(TAG, "onBackPressed");
         return;
     }
 
@@ -177,7 +174,7 @@ public class LockScreenActivity extends Activity{
                     }
                     // Get Viewer pos
                     if (null == mViewerRect) {
-                        int [] pos = new int[2];
+                        int[] pos = new int[2];
                         mViewer.getLocationOnScreen(pos);
                         mViewerRect = new Rect(pos[0], pos[1],
                                 pos[0] + mViewer.getWidth(),
@@ -208,10 +205,10 @@ public class LockScreenActivity extends Activity{
                         left = right - v.getWidth();
                     }
 
-                    if (top < 0) {
+                    /*if (top < 0) {
                         top = 0;
                         bottom = top + v.getHeight();
-                    }
+                    }*/
 
                     if (bottom > mScreenHeight) {
                         bottom = mScreenHeight;
@@ -312,6 +309,6 @@ public class LockScreenActivity extends Activity{
         /**
          * 打印高斯模糊处理时间，如果时间大约16ms，用户就能感到到卡顿，时间越长卡顿越明显，如果对模糊完图片要求不高，可是将scaleFactor设置大一些。
          */
-        Log.i("jerome", "blur time:" + (System.currentTimeMillis() - startMs));
+        WeLog.i(TAG, "blur time:" + (System.currentTimeMillis() - startMs));
     }
 }
