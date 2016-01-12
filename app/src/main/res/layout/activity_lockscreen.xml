@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/lockscreen_root"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:background="@color/colorLockScreenBg"
     android:orientation="vertical"
+    android:clipChildren="false"
+    android:clipToPadding="false"
     android:paddingTop="@dimen/lockscreen_margin_top"
     android:paddingBottom="@dimen/lockscreen_margin_bottom">
-
+`
     <TextView
         android:id="@+id/time"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:text="time"
         android:textColor="#fff"
         android:textSize="90sp" />
 
@@ -25,16 +26,15 @@
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="@dimen/date_margin_bottom"
         android:layout_marginTop="@dimen/date_margin_top"
-        android:text="date"
         android:textColor="#fff"
         android:textSize="24sp" />
 
-    <View
+    <ImageView
         android:id="@+id/ad_content"
         android:layout_width="match_parent"
         android:layout_height="@dimen/ad_height"
         android:layout_below="@id/date"
-        android:background="@android:color/black"
+        android:background="@android:color/transparent"
         android:layout_marginBottom="40dp" />
 
 
@@ -44,6 +44,8 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
+        android:clipChildren="false"
+        android:clipToPadding="false"
         android:orientation="horizontal">
 
         <View

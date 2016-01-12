@@ -1,9 +1,9 @@
-package com.webeye.lockscreen;
+package com.webeye.common;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class TimeUtils {
+public class WeTimeUtils {
 
     /**
      * @return "HH:mm:ss"

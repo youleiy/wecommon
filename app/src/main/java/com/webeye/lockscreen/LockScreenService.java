@@ -32,13 +32,7 @@ public class LockScreenService extends Service {
     }
 
     @Override
-    public void onStart(Intent intent, int startId) {
-        super.onStart(intent, startId);
-    }
-
-    @Override
     public void onDestroy() {
-
         super.onDestroy();
         kl.reenableKeyguard();
         unregisterReceiver(mReceiver);

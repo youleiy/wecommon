@@ -1,9 +1,15 @@
 package com.webeye.lockscreen;
 
 import android.app.Activity;
+import android.app.WallpaperManager;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.provider.Settings;
@@ -11,9 +17,14 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.MeasureSpec;
 import android.view.WindowManager;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
+
+import com.webeye.common.FastBlur;
+import com.webeye.common.WeTimeUtils;
 
 /**
  * 锁屏页
@@ -28,13 +39,20 @@ public class LockScreenActivity extends Activity{
     private int mScreenHeight;
     private ImageView mKeyImageView;
     private ImageView mLockerImageView;
+    private ImageView mViewer;
     private TextView timeNow;
     private TextView dateNow;
+    private ImageView adContent;
+    private RelativeLayout rootView;
 
-    private int[] mLockerPos = new int[2];
     private Rect mLockerRect;
+    private Rect mViewerRect;
 
-    private int mSleepTime;
+    private int mScreenOffTime;
+    private Bitmap mAdBmp;
+
+    private String mImages[] = {"001.jpg", "002.jpg", "003.jpg", "004.jpg"};
+    private int mCurrent = 0;
 
     /**
      * 屏蔽4.0+home键, 某些机型可以，不能适用所有版本和机型
@@ -43,7 +61,6 @@ public class LockScreenActivity extends Activity{
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
         // 屏蔽4.0+home键, 某些机型可以，不能适用所有版本和机型
         // this.getWindow().setFlags(FLAG_HOMEKEY_DISPATCHED, FLAG_HOMEKEY_DISPATCHED);// 屏蔽4.0+ home键
@@ -60,22 +77,31 @@ public class LockScreenActivity extends Activity{
         timeNow = (TextView) findViewById(R.id.time);
         Typeface typeFace = Typeface.createFromAsset(getAssets(), "Roboto-Thin.ttf");
         timeNow.setTypeface(typeFace);
-        timeNow.setText(TimeUtils.getTime());
+        timeNow.setText(WeTimeUtils.getTime());
 
         dateNow = (TextView) findViewById(R.id.date);
         typeFace = Typeface.createFromAsset(getAssets(), "Roboto-Light.ttf");
         dateNow.setTypeface(typeFace);
-        dateNow.setText(TimeUtils.getDate());
+        dateNow.setText(WeTimeUtils.getDate());
 
         mLockerImageView = (ImageView) findViewById(R.id.locker);
+        mViewer = (ImageView) findViewById(R.id.operation);
+        mViewer.setScaleType(ImageView.ScaleType.FIT_XY);
         // keyImageView图片的touch事件
         mKeyImageView.setOnTouchListener(mKeyMoveListener);
 
         mScreenWidth = getWindowManager().getDefaultDisplay().getWidth();
         mScreenHeight = getWindowManager().getDefaultDisplay().getHeight();
 
-        //
-        mSleepTime = getScreenOffTime();
+        // Get sleep time
+        mScreenOffTime = getScreenOffTime();
+
+        adContent = (ImageView) findViewById(R.id.ad_content);
+        rootView = (RelativeLayout) findViewById(R.id.lockscreen_root);
+        /*if (null != mBackground) {
+            getBackground(mBackground);
+        }*/
+        applyBlur();
     }
 
     @Override
@@ -143,10 +169,19 @@ public class LockScreenActivity extends Activity{
 
                     // Get locker pos
                     if (null == mLockerRect) {
-                        mLockerImageView.getLocationOnScreen(mLockerPos);
-                        mLockerRect = new Rect(mLockerPos[0], mLockerPos[1],
-                                mLockerPos[0] + mLockerImageView.getWidth(),
-                                mLockerPos[1] + mLockerImageView.getHeight());
+                        int[] lockPos = new int[2];
+                        mLockerImageView.getLocationOnScreen(lockPos);
+                        mLockerRect = new Rect(lockPos[0], lockPos[1],
+                                lockPos[0] + mLockerImageView.getWidth(),
+                                lockPos[1] + mLockerImageView.getHeight());
+                    }
+                    // Get Viewer pos
+                    if (null == mViewerRect) {
+                        int [] pos = new int[2];
+                        mViewer.getLocationOnScreen(pos);
+                        mViewerRect = new Rect(pos[0], pos[1],
+                                pos[0] + mViewer.getWidth(),
+                                pos[1] + mViewer.getHeight());
                     }
                     oldLeft = v.getLeft();
                     oldTop = v.getTop();
@@ -192,6 +227,10 @@ public class LockScreenActivity extends Activity{
                         onUnlock();
                     }
 
+                    if (mViewerRect.contains(lastX, lastY)) {
+//                        changeAd();
+                    }
+
                     break;
 
                 case MotionEvent.ACTION_UP:
@@ -224,5 +263,55 @@ public class LockScreenActivity extends Activity{
 
         }
         return screenOffTime;
+    }
+
+    private void applyBlur() {
+        View view = getWindow().getDecorView();
+        view.setDrawingCacheEnabled(true);
+        view.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED), MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+        view.layout(0, 0, view.getMeasuredWidth(), view.getMeasuredHeight());
+        view.buildDrawingCache(true);
+        /**
+         * 获取当前窗口快照，相当于截屏
+         */
+//        Bitmap bmp1 = view.getDrawingCache();
+        WallpaperManager wallpaperManager = WallpaperManager.getInstance(this);
+        // 获取当前壁纸
+        Drawable wallpaperDrawable = wallpaperManager.getDrawable();
+        // 将Drawable,转成Bitmap
+        Bitmap bmp1 = ((BitmapDrawable) wallpaperDrawable).getBitmap();
+
+        Rect frame = new Rect();
+        getWindow().getDecorView().getWindowVisibleDisplayFrame(frame);
+        int height = frame.top;
+        /**
+         * 除去状态栏和标题栏
+         */
+        Bitmap bmp2 = Bitmap.createBitmap(bmp1, 0, height, bmp1.getWidth(), bmp1.getHeight() - height);
+        blur(bmp2, rootView);
+    }
+
+    private void blur(Bitmap bkg, View view) {
+        long startMs = System.currentTimeMillis();
+        float scaleFactor = 8;//图片缩放比例；
+        float radius = 20;//模糊程度
+
+        Bitmap overlay = Bitmap.createBitmap(
+                (int) (view.getMeasuredWidth() / scaleFactor),
+                (int) (view.getMeasuredHeight() / scaleFactor),
+                Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(overlay);
+        canvas.translate(-view.getLeft() / scaleFactor, -view.getTop() / scaleFactor);
+        canvas.scale(1 / scaleFactor, 1 / scaleFactor);
+        Paint paint = new Paint();
+        paint.setFlags(Paint.FILTER_BITMAP_FLAG);
+        canvas.drawBitmap(bkg, 0, 0, paint);
+
+        overlay = FastBlur.doBlur(overlay, (int) radius, true);
+        view.setBackground(new BitmapDrawable(getResources(), overlay));
+        /**
+         * 打印高斯模糊处理时间，如果时间大约16ms，用户就能感到到卡顿，时间越长卡顿越明显，如果对模糊完图片要求不高，可是将scaleFactor设置大一些。
+         */
+        Log.i("jerome", "blur time:" + (System.currentTimeMillis() - startMs));
     }
 }

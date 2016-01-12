@@ -8,8 +8,9 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.KeyEvent;
+
+import com.webeye.common.WeLog;
 
 import java.util.List;
 
@@ -32,13 +33,13 @@ public class MainActivity extends Activity {
     @Override
     public void onPause() {
         super.onPause();
-        Log.e(TAG, "onPause");
+        WeLog.e(TAG, "onPause");
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        Log.e(TAG, "onResume");
+        WeLog.e(TAG, "onResume");
 
         // LockScreenActivity设为Launcher，已经启动了service
         Intent serviceIntent = new Intent();
@@ -61,19 +62,19 @@ public class MainActivity extends Activity {
 		 * then this only works if the activity is the root of a task; if true
 		 * it will work for any 该Activity设置了android:launchMode="singleInstance"
 		 */
-        moveTaskToBack(false);// MainActivity作为Home页，把它拿到后边去，否则覆盖在锁屏页上边
+        moveTaskToBack(false); // MainActivity作为Home页，把它拿到后边去，否则覆盖在锁屏页上边
     }
 
     @Override
     public void onNewIntent(Intent intent) {
         setIntent(intent);
-        Log.e(TAG, "onNewIntent");
+        WeLog.e(TAG, "onNewIntent");
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Log.e(TAG, "onDestroy");
+        WeLog.e(TAG, "onDestroy");
     }
 
     /**
@@ -94,8 +95,8 @@ public class MainActivity extends Activity {
             for (int i = 0; i < res.size(); i++) {
                 ResolveInfo r = res.get(i);
                 if ((r.activityInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) > 0) {
-                    Log.e(TAG, "系统Home-packageName:" + r.activityInfo.packageName);
-                    Log.e(TAG, "系统Home-Name:" + r.activityInfo.name);
+                    WeLog.d(TAG, "System Launcher-packageName:" + r.activityInfo.packageName);
+                    WeLog.d(TAG, "System Launcher-Name:" + r.activityInfo.name);
 
                     mPackageName = r.activityInfo.packageName;
                     mName = r.activityInfo.name;

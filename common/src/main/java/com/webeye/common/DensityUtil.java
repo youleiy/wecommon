@@ -1,4 +1,4 @@
-package com.webeye.lockscreen;
+package com.webeye.common;
 
 import android.content.Context;
 
@@ -6,9 +6,12 @@ import android.content.Context;
  * dp、sp 转换为 px 的工具类
  *
  * @author thunder
- *
  */
-public class DisplayUtil {
+public class DensityUtil {
+    private DensityUtil() {
+        throw new UnsupportedOperationException("DensityUtil cannot be instantiated");
+    }
+
     /**
      * 将px值转换为dip或dp值，保证尺寸大小不变
      *
@@ -35,7 +38,6 @@ public class DisplayUtil {
      * 将px值转换为sp值，保证文字大小不变
      *
      * @param pxValue value in px
-     *
      * @return the value in sp
      */
     public static int px2sp(Context context, float pxValue) {
@@ -47,7 +49,6 @@ public class DisplayUtil {
      * 将sp值转换为px值，保证文字大小不变
      *
      * @param spValue value in sp.
-     *
      * @return
      */
     public static int sp2px(Context context, float spValue) {

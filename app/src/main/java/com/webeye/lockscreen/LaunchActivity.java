@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Toast;
 
 /**
  * 本界面只是App启动后的第一个界面，显示一个按钮，点击触发锁屏监听
@@ -31,14 +30,12 @@ public class LaunchActivity extends Activity {
         Intent sintent = new Intent();
         sintent.setClass(this, LockScreenService.class);
         startService(sintent);
-        Toast.makeText(this, "锁屏已启动，请关闭屏幕后再点亮测试", Toast.LENGTH_SHORT).show();
     }
 
     public void startLockScreen() {
         Intent intent = new Intent();
         intent.setClass(this, LockScreenService.class);
         startService(intent);
-        Toast.makeText(this, "锁屏已启动，请关闭屏幕后再点亮测试", Toast.LENGTH_SHORT).show();
 
         // 启动锁屏界面
         Intent intent1 = new Intent(this, LockScreenActivity.class);
