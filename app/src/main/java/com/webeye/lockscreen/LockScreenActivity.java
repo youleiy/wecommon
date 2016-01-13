@@ -2,7 +2,9 @@ package com.webeye.lockscreen;
 
 import android.app.Activity;
 import android.app.WallpaperManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -12,7 +14,6 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Vibrator;
-import android.provider.Settings;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -48,11 +49,7 @@ public class LockScreenActivity extends Activity {
     private Rect mLockerRect;
     private Rect mViewerRect;
 
-    private int mScreenOffTime;
-    private Bitmap mAdBmp;
-
-    private String mImages[] = {"001.jpg", "002.jpg", "003.jpg", "004.jpg"};
-    private int mCurrent = 0;
+    private static Bitmap mBackground;
 
     /**
      * 屏蔽4.0+home键, 某些机型可以，不能适用所有版本和机型
@@ -65,7 +62,7 @@ public class LockScreenActivity extends Activity {
         // this.getWindow().setFlags(FLAG_HOMEKEY_DISPATCHED, FLAG_HOMEKEY_DISPATCHED);// 屏蔽4.0+ home键
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
-                        | WindowManager.LayoutParams.FLAG_FULLSCREEN);
+                | WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_lockscreen);
 
         isStarted = true;
@@ -74,12 +71,10 @@ public class LockScreenActivity extends Activity {
         timeNow = (TextView) findViewById(R.id.time);
         Typeface typeFace = Typeface.createFromAsset(getAssets(), "Roboto-Thin.ttf");
         timeNow.setTypeface(typeFace);
-        timeNow.setText(WeTimeUtils.getTime());
 
         dateNow = (TextView) findViewById(R.id.date);
         typeFace = Typeface.createFromAsset(getAssets(), "Roboto-Light.ttf");
         dateNow.setTypeface(typeFace);
-        dateNow.setText(WeTimeUtils.getDate());
 
         mLockerImageView = (ImageView) findViewById(R.id.locker);
         mViewer = (ImageView) findViewById(R.id.operation);
@@ -90,15 +85,13 @@ public class LockScreenActivity extends Activity {
         mScreenWidth = getWindowManager().getDefaultDisplay().getWidth();
         mScreenHeight = getWindowManager().getDefaultDisplay().getHeight();
 
-        // Get sleep time
-        mScreenOffTime = getScreenOffTime();
-
         adContent = (ImageView) findViewById(R.id.ad_content);
         rootView = (RelativeLayout) findViewById(R.id.lockscreen_root);
-        /*if (null != mBackground) {
-            getBackground(mBackground);
-        }*/
-        applyBlur();
+        if (null != mBackground) {
+            rootView.setBackground(new BitmapDrawable(getResources(), mBackground));
+        } else {
+            applyBlur();
+        }
     }
 
     @Override
@@ -112,12 +105,19 @@ public class LockScreenActivity extends Activity {
     }
 
     @Override
+    protected void onResume() {
+        timeNow.setText(WeTimeUtils.getTime());
+        dateNow.setText(WeTimeUtils.getDate());
+        super.onResume();
+    }
+
+    @Override
     public boolean onKeyDown(int keyCode, android.view.KeyEvent event) {
 
         if ((keyCode == KeyEvent.KEYCODE_HOME)) {
             // Key code constant: Home key. This key is handled by the framework
             // and is never delivered to applications.
-            WeLog.e(TAG, "On Home Key");
+            WeLog.d(TAG, "On Home Key");
             return true;
         }
         return super.onKeyDown(keyCode, event);
@@ -133,8 +133,7 @@ public class LockScreenActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        WeLog.e(TAG, "onBackPressed");
-        return;
+        WeLog.d(TAG, "onBackPressed");
     }
 
     @Override
@@ -220,12 +219,13 @@ public class LockScreenActivity extends Activity {
                     lastX = (int) event.getRawX();
                     lastY = (int) event.getRawY();
 
+                    // move to the lock image.
                     if (mLockerRect.contains(lastX, lastY)) {
                         onUnlock();
                     }
 
+                    //  move to the operation image.
                     if (mViewerRect.contains(lastX, lastY)) {
-//                        changeAd();
                     }
 
                     break;
@@ -249,33 +249,26 @@ public class LockScreenActivity extends Activity {
     }
 
     /**
-     * 获得休眠时间 毫秒
+     * 使用当期壁纸做高斯模糊
      */
-    private int getScreenOffTime() {
-        int screenOffTime = 0;
-        try {
-            screenOffTime = Settings.System.getInt(getContentResolver(),
-                    Settings.System.SCREEN_OFF_TIMEOUT);
-        } catch (Exception localException) {
-
-        }
-        return screenOffTime;
-    }
-
     private void applyBlur() {
-        View view = getWindow().getDecorView();
-        view.setDrawingCacheEnabled(true);
-        view.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED), MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
-        view.layout(0, 0, view.getMeasuredWidth(), view.getMeasuredHeight());
-        view.buildDrawingCache(true);
         /**
          * 获取当前窗口快照，相当于截屏
          */
-//        Bitmap bmp1 = view.getDrawingCache();
+/*      View view = getWindow().getDecorView();
+        view.setDrawingCacheEnabled(true);
+        view.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
+                MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+        view.layout(0, 0, view.getMeasuredWidth(), view.getMeasuredHeight());
+        view.buildDrawingCache(true);
+        Bitmap bmp1 = view.getDrawingCache();*/
+
+        /**
+         *获取当前壁纸
+         */
         WallpaperManager wallpaperManager = WallpaperManager.getInstance(this);
-        // 获取当前壁纸
         Drawable wallpaperDrawable = wallpaperManager.getDrawable();
-        // 将Drawable,转成Bitmap
+
         Bitmap bmp1 = ((BitmapDrawable) wallpaperDrawable).getBitmap();
 
         Rect frame = new Rect();
@@ -284,7 +277,8 @@ public class LockScreenActivity extends Activity {
         /**
          * 除去状态栏和标题栏
          */
-        Bitmap bmp2 = Bitmap.createBitmap(bmp1, 0, height, bmp1.getWidth(), bmp1.getHeight() - height);
+        Bitmap bmp2 = Bitmap.createBitmap(bmp1, 0, height, bmp1.getWidth(),
+                bmp1.getHeight() - height);
         blur(bmp2, rootView);
     }
 
@@ -292,6 +286,11 @@ public class LockScreenActivity extends Activity {
         long startMs = System.currentTimeMillis();
         float scaleFactor = 8;//图片缩放比例；
         float radius = 20;//模糊程度
+
+        // 必须执行,decorView.measure, 否则view.getMeasuredWidth 返回0
+        View decorView = getWindow().getDecorView();
+        decorView.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
+                MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
 
         Bitmap overlay = Bitmap.createBitmap(
                 (int) (view.getMeasuredWidth() / scaleFactor),
@@ -305,10 +304,26 @@ public class LockScreenActivity extends Activity {
         canvas.drawBitmap(bkg, 0, 0, paint);
 
         overlay = FastBlur.doBlur(overlay, (int) radius, true);
+        mBackground = overlay;
         view.setBackground(new BitmapDrawable(getResources(), overlay));
+
         /**
          * 打印高斯模糊处理时间，如果时间大约16ms，用户就能感到到卡顿，时间越长卡顿越明显，如果对模糊完图片要求不高，可是将scaleFactor设置大一些。
          */
         WeLog.i(TAG, "blur time:" + (System.currentTimeMillis() - startMs));
     }
+
+    public static class ChangeWallpaperReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            WeLog.d(TAG, "Wallpaper changed");
+            if (null != mBackground) {
+                mBackground.recycle();
+                System.gc();
+                mBackground = null;
+            }
+        }
+    }
+
 }
